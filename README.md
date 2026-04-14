@@ -2,7 +2,7 @@
 
 Репозиторий для разработчиков. Содержит исходник, тесты, UI-соглашения и инструкции для AI-ассистента.
 
-Пользовательская версия (только HTML): [universal-table](https://github.com/TODO/universal-table)
+Пользовательская версия (только HTML): [universal-table](https://github.com/alexzah-droid/universal-table)
 
 ---
 
