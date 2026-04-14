@@ -1,0 +1,10 @@
+node_modules/
+playwright-report/
+test-results/
+.DS_Store
+.claude/
+
+# Personal
+table-template.md
+Cases.html
+marked.min.js

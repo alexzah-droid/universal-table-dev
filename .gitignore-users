@@ -1,0 +1,20 @@
+node_modules/
+playwright-report/
+test-results/
+.DS_Store
+.claude/
+
+# Dev-only files
+tests/
+package.json
+package-lock.json
+playwright.config.js
+CLAUDE.md
+frontend-ui-design.md
+marked.min.js
+
+# Personal
+table-template.md
+Cases.html
+*.html
+!universal-table.html

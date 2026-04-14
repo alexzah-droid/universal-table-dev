@@ -1,0 +1,14 @@
+{
+  "name": "potestcases-tests",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:desktop": "playwright test --grep @desktop",
+    "test:mobile": "playwright test --grep @mobile",
+    "test:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  }
+}
