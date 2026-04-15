@@ -197,6 +197,22 @@ Opacity 5–8% — пятна еле заметны, создают ощущен
 transition: ... 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 ```
 
+### Expand-контент внутри карточки
+
+Раскрывающийся блок — часть карточки, не вложенный блок. Отделяется только разделителем сверху:
+
+```css
+.item-expand-inner {
+  padding: 12px 14px;
+  border-top: 1px solid var(--sep);   /* разделитель, не рамка */
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--t2);                   /* приглушённый текст */
+  /* НЕ добавлять: background, border (full), border-radius — */
+  /* создаёт "коробку в коробке", противоречит Apple HIG */
+}
+```
+
 ### Аккордеон без JS-измерений
 Трюк с `grid-template-rows` — анимирует высоту без `height: auto`:
 ```css
