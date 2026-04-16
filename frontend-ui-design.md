@@ -369,15 +369,28 @@ body    { padding-bottom: calc(80px + var(--safe-b)); }
 ```
 На Android и десктопе `env(...)` возвращает `0px` — ничего не ломается.
 
-### Sticky topbar
+### Sticky topbar (mobile)
 ```css
 .topbar {
   position: sticky;
   top: 0;
-  z-index: 100;
-  /* + glass-эффект */
+  z-index: 10;
+  background: var(--bg2);
+  backdrop-filter: var(--blur);
 }
 ```
+
+### Sticky filter-bar (desktop)
+```css
+.filter-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: transparent;       /* без видимой подложки */
+  backdrop-filter: var(--blur);   /* blur при скролле */
+}
+```
+**Важно:** фон `transparent`, не `--bg` и не `--bg2` — иначе видна серая полоса на фоне страничного градиента.
 
 ### Touch-targets: минимум 44px
 ```css

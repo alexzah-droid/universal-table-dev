@@ -99,7 +99,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Helve
 .btn-save svg{width:13px;height:13px}
 .btn-theme{display:flex;align-items:center;justify-content:center;width:34px;height:34px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--fg)}
 .btn-theme svg{width:18px;height:18px}
-.filter-bar{display:flex;align-items:flex-start;gap:8px;padding:12px 20px}
+.filter-bar{display:flex;align-items:flex-start;gap:8px;padding:12px 20px;position:sticky;top:0;z-index:10;background:transparent;backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur)}
 .filter-group{display:flex;gap:6px;flex-wrap:wrap;flex:1}
 .filter-select{padding:7px 28px 7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--fg);font-size:13px;cursor:pointer;outline:none;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238e8e93' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;max-width:160px}
 .filter-divider{width:1px;height:24px;background:var(--border);flex-shrink:0}
@@ -576,7 +576,7 @@ async function saveFile() {
         await w.close();
         setUnsaved(false);
         return;
-      } catch(e) {}
+      } catch(e) { console.warn('File save failed, falling back to download:', e); }
     }
   }
   downloadHtml(html, CONFIG.filename || 'my-table.html');
