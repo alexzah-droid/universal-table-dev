@@ -142,6 +142,7 @@ html = re.sub(r'const ROWS = \[[\s\S]*?\];', 'const ROWS = ' + json.dumps(rows, 
 - `Cases.html` и другие сгенерированные таблицы с данными
 - `frontend-ui-design.md` — внутренние соглашения по UI
 - `CLAUDE.md` — инструкции для AI
+- `BACKLOG.md` — идеи по улучшению с обоснованием отсрочки
 
 ---
 
