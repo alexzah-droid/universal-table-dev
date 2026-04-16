@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Universal Table</title>
-<script>(function(){var t=localStorage.getItem('ut-theme')||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})()</script>
+<script>(function(){var t=localStorage.getItem('ut-theme');if(t!=='dark'&&t!=='light')t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);})()</script>
 <script>
 /**
  * marked v9.1.6 - a markdown parser
@@ -38,6 +38,7 @@
   --bg3:rgba(120,120,128,0.18);
   --fg:#f5f5f7; --fg2:#98989d; --fg3:#48484a; --border:rgba(255,255,255,0.09);
   --accent:#0a84ff; --accent-h:#0070d8;
+  --red:#FF453A; --orange:#FF9F0A;
   --glass-hi:rgba(255,255,255,0.06);
   --shadow:0 1px 1px rgba(0,0,0,.25),0 2px 8px rgba(0,0,0,.35),0 6px 20px rgba(0,0,0,.25);
   --shadow-md:0 1px 1px rgba(0,0,0,.35),0 4px 12px rgba(0,0,0,.45),0 14px 40px rgba(0,0,0,.35);
@@ -98,12 +99,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Helve
 .btn-save svg{width:13px;height:13px}
 .btn-theme{display:flex;align-items:center;justify-content:center;width:34px;height:34px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--fg)}
 .btn-theme svg{width:18px;height:18px}
-.filter-bar{display:flex;align-items:flex-start;gap:8px;padding:12px 20px}
+.filter-bar{display:flex;align-items:flex-start;gap:8px;padding:12px 20px;position:sticky;top:0;z-index:10;background:transparent;backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur)}
 .filter-group{display:flex;gap:6px;flex-wrap:wrap;flex:1}
-.filter-select{padding:7px 28px 7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--fg);font-size:13px;cursor:pointer;outline:none;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238e8e93' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center}
+.filter-select{padding:7px 28px 7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--fg);font-size:13px;cursor:pointer;outline:none;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238e8e93' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;max-width:160px}
 .filter-divider{width:1px;height:24px;background:var(--border);flex-shrink:0}
 .filter-meta{display:flex;align-items:center;gap:6px;flex-shrink:0}
-.filter-count{font-size:13px;color:var(--fg2);white-space:nowrap}
+.filter-count{display:none}
 .btn-clear{background:none;border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;color:var(--fg2);cursor:pointer}
 .btn-clear:hover{border-color:var(--accent);color:var(--accent)}
 .btn-export{display:flex;align-items:center;gap:5px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;color:var(--fg2);cursor:pointer}
@@ -132,7 +133,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Helve
 .item.has-confirm .item-actions{opacity:1!important}
 .item-expand{display:none;grid-column:1/-1;padding:0 8px 12px}
 .item.open .item-expand{display:block}
-.item-expand-inner,.card-expand-inner{padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:13px;line-height:1.7}
+.item-expand-inner,.card-expand-inner{padding:12px 14px;border-top:1px solid var(--border);font-size:13px;line-height:1.7;color:var(--fg2)}
 .item-expand-inner p,.card-expand-inner p{margin-bottom:10px}
 .item-expand-inner p:last-child,.card-expand-inner p:last-child{margin-bottom:0}
 .item-expand-inner h1,.item-expand-inner h2,.item-expand-inner h3,.card-expand-inner h1,.card-expand-inner h2,.card-expand-inner h3{margin:14px 0 6px;font-size:14px}
@@ -585,10 +586,13 @@ function slugify(name, existing=[]) {
 
 const HTML_TEMPLATE = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
 
+function safeStringify(obj, indent) {
+  return JSON.stringify(obj, null, indent).replace(/<\/(script)/gi, '<\\/$1');
+}
 function buildHtml(cfg, rws) {
   return HTML_TEMPLATE
-    .replace(/const CONFIG = [\s\S]*?;(\s*\n)/, 'const CONFIG = ' + JSON.stringify(cfg, null, 2) + ';\n')
-    .replace(/const ROWS = \[[\s\S]*?\];/, 'const ROWS = ' + JSON.stringify(rws, null, 2) + ';');
+    .replace(/const CONFIG = [\s\S]*?;(\s*\n)/, 'const CONFIG = ' + safeStringify(cfg, 2) + ';\n')
+    .replace(/const ROWS = \[[\s\S]*?\];/, 'const ROWS = ' + safeStringify(rws, 2) + ';');
 }
 
 const canFSA = 'showOpenFilePicker' in window;
@@ -611,7 +615,7 @@ async function saveFile() {
         await w.close();
         setUnsaved(false);
         return;
-      } catch(e) {}
+      } catch(e) { console.warn('File save failed, falling back to download:', e); }
     }
   }
   downloadHtml(html, CONFIG.filename || 'my-table.html');
@@ -807,8 +811,18 @@ function sorted(data) {
   });
 }
 
+function sanitizeHtml(html) {
+  const div=document.createElement('div'); div.innerHTML=html;
+  div.querySelectorAll('script,iframe,object,embed,link,style,form,input,textarea,button,meta').forEach(el=>el.remove());
+  div.querySelectorAll('*').forEach(el=>{
+    for(const a of [...el.attributes]){
+      if(a.name.startsWith('on')||a.value.trim().toLowerCase().startsWith('javascript:')) el.removeAttribute(a.name);
+    }
+  });
+  return div.innerHTML;
+}
 function renderMd(text, el) {
-  if(typeof marked!=='undefined') el.innerHTML=marked.parse(String(text).replace(/\\n/g,'\n'));
+  if(typeof marked!=='undefined') el.innerHTML=sanitizeHtml(marked.parse(String(text).replace(/\\n/g,'\n')));
   else el.textContent=text;
 }
 
