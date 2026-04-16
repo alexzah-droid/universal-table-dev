@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Universal Table</title>
-<script>(function(){var t=localStorage.getItem('ut-theme')||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})()</script>
+<script>(function(){var t=localStorage.getItem('ut-theme');if(t!=='dark'&&t!=='light')t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);})()</script>
 <script>
 /**
  * marked v9.1.6 - a markdown parser
@@ -38,6 +38,7 @@
   --bg3:rgba(120,120,128,0.18);
   --fg:#f5f5f7; --fg2:#98989d; --fg3:#48484a; --border:rgba(255,255,255,0.09);
   --accent:#0a84ff; --accent-h:#0070d8;
+  --red:#FF453A; --orange:#FF9F0A;
   --glass-hi:rgba(255,255,255,0.06);
   --shadow:0 1px 1px rgba(0,0,0,.25),0 2px 8px rgba(0,0,0,.35),0 6px 20px rgba(0,0,0,.25);
   --shadow-md:0 1px 1px rgba(0,0,0,.35),0 4px 12px rgba(0,0,0,.45),0 14px 40px rgba(0,0,0,.35);
@@ -771,8 +772,18 @@ function sorted(data) {
   });
 }
 
+function sanitizeHtml(html) {
+  const div=document.createElement('div'); div.innerHTML=html;
+  div.querySelectorAll('script,iframe,object,embed,link,style,form,input,textarea,button,meta').forEach(el=>el.remove());
+  div.querySelectorAll('*').forEach(el=>{
+    for(const a of [...el.attributes]){
+      if(a.name.startsWith('on')||a.value.trim().toLowerCase().startsWith('javascript:')) el.removeAttribute(a.name);
+    }
+  });
+  return div.innerHTML;
+}
 function renderMd(text, el) {
-  if(typeof marked!=='undefined') el.innerHTML=marked.parse(String(text).replace(/\\n/g,'\n'));
+  if(typeof marked!=='undefined') el.innerHTML=sanitizeHtml(marked.parse(String(text).replace(/\\n/g,'\n')));
   else el.textContent=text;
 }
 
