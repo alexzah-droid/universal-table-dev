@@ -1,5 +1,11 @@
 # Universal Table — Developer
 
+[![Status](https://img.shields.io/badge/status-active-16a34a)](.)
+[![License](https://img.shields.io/badge/license-MIT-0ea5e9)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-79%20E2E-8b5cf6)](tests/TEST_COVERAGE.md)
+[![JavaScript](https://img.shields.io/badge/JavaScript-vanilla-f7df1e?logo=javascript)](.)
+[![Playwright](https://img.shields.io/badge/Playwright-E2E%20tests-00d4ff?logo=playwright)](tests/TEST_COVERAGE.md)
+
 Репозиторий для разработчиков. Содержит исходник, тесты, UI-соглашения и инструкции для AI-ассистента.
 
 Пользовательская версия (только HTML): [universal-table](https://github.com/TODO/universal-table)
