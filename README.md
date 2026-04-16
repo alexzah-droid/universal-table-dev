@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/badge/license-MIT-0ea5e9)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-79%20E2E-8b5cf6)](tests/TEST_COVERAGE.md)
 [![No Dependencies](https://img.shields.io/badge/no%20dependencies-single%20HTML%20file-10b981)](.)
-[![Self-modifying](https://img.shields.io/badge/self--modifying-data%20storage-f59e0b)](CLAUDE.md)
+[![Self-modifying](https://img.shields.io/badge/self--modifying-data%20storage-f59e0b)](.)
 
 Универсальный self-modifying HTML-шаблон для хранения, добавления, редактирования, отображения и экспорта любых табличных данных — без сервера и зависимостей.
 
