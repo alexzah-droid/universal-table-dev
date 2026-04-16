@@ -605,6 +605,17 @@ test.describe('Данные: задачи @desktop', () => {
     await expect(page.locator('#unsaved-group-d')).toBeVisible();
   });
 
+  // ─── Security: script escape ────────────────────────────────────────────────
+
+  test('buildHtml экранирует </script> в данных', async ({ page }) => {
+    const html = await page.evaluate(() => {
+      rows.push({ id: 9999, name: '</script><img src=x>', company: 'test', role: 'Dev', date: '2024-01-01', level: 'Junior' });
+      return buildHtml(CONFIG, rows);
+    });
+    expect(html).not.toContain('</script><img');
+    expect(html).toContain('<\\/script>');
+  });
+
   // ─── Filter ────────────────────────────────────────────────────────────────
 
   test('фильтр по Приоритету «High» оставляет только High-задачи', async ({ page }) => {

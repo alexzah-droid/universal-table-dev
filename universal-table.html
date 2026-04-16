@@ -550,10 +550,13 @@ function slugify(name, existing=[]) {
 
 const HTML_TEMPLATE = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
 
+function safeStringify(obj, indent) {
+  return JSON.stringify(obj, null, indent).replace(/<\/(script)/gi, '<\\/$1');
+}
 function buildHtml(cfg, rws) {
   return HTML_TEMPLATE
-    .replace(/const CONFIG = [\s\S]*?;(\s*\n)/, 'const CONFIG = ' + JSON.stringify(cfg, null, 2) + ';\n')
-    .replace(/const ROWS = \[[\s\S]*?\];/, 'const ROWS = ' + JSON.stringify(rws, null, 2) + ';');
+    .replace(/const CONFIG = [\s\S]*?;(\s*\n)/, 'const CONFIG = ' + safeStringify(cfg, 2) + ';\n')
+    .replace(/const ROWS = \[[\s\S]*?\];/, 'const ROWS = ' + safeStringify(rws, 2) + ';');
 }
 
 const canFSA = 'showOpenFilePicker' in window;
