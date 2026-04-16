@@ -26,7 +26,7 @@ Self-modifying HTML-шаблон без сервера и зависимосте
 - `sanitizeHtml()` — XSS-защита при рендеринге Markdown
 - `--grid-cols` — CSS-переменная динамической сетки, устанавливается из JS
 - Markdown рендеринг — marked.js, встроен в шаблон (не внешняя зависимость)
-- XLSX export/import — pure-JS OpenXML ZIP без зависимостей, roundtrip editing
+- XLSX export/import — pure-JS OpenXML ZIP без зависимостей, roundtrip editing. Импорт полностью заменяет данные (с confirm-диалогом)
 
 Подробнее — в [`CLAUDE.md`](CLAUDE.md).
 
