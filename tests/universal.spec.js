@@ -655,6 +655,38 @@ test.describe('Данные: задачи @desktop', () => {
     expect(size).toBeGreaterThan(500);
   });
 
+  // ─── XLSX Import ──────────────────────────────────────────────────────────
+
+  test('roundtrip: export → import восстанавливает данные', async ({ page }) => {
+    const countBefore = await countItems(page);
+
+    // Export
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('#btn-export-d'),
+    ]);
+    const xlsxPath = await download.path();
+
+    // Delete first row to change state
+    const delBtn = page.locator('#list .item').first().locator('.btn-icon-delete');
+    await delBtn.click();
+    await delBtn.click();
+    expect(await countItems(page)).toBe(countBefore - 1);
+
+    // Import the exported file
+    page.on('dialog', d => d.accept());
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.click('#btn-import-d');
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(xlsxPath);
+
+    // Wait for import to complete
+    await page.waitForTimeout(1000);
+
+    // Verify data restored
+    expect(await countItems(page)).toBe(countBefore);
+  });
+
   // ─── allowNew select ───────────────────────────────────────────────────────
 
   test('пустая таблица — добавление через allowNew select', async ({ page }) => {

@@ -306,6 +306,10 @@ dialog.crud-modal:not([open]){display:none!important}
     <div><select class="filter-select" id="f-sort"></select></div>
     <span class="filter-count" id="f-count"></span>
     <button class="btn-clear" id="btn-clear" hidden>Сбросить</button>
+    <button class="btn-export" id="btn-import-d" aria-label="Импорт xlsx">
+      <svg viewBox="0 0 13 13" fill="none"><path d="M6.5 9V1.5M4 3.5L6.5 1 9 3.5M2 11.5h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      xlsx
+    </button>
     <button class="btn-export" id="btn-export-d" aria-label="Экспорт в xlsx">
       <svg viewBox="0 0 13 13" fill="none"><path d="M6.5 1v7.5M4 6.5l2.5 2.5 2.5-2.5M2 11.5h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
       xlsx
@@ -344,6 +348,10 @@ dialog.crud-modal:not([open]){display:none!important}
       <svg viewBox="0 0 15 15" fill="none"><path d="M1 3h13M3.5 7.5h8M6 12h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       Фильтры
       <span class="filter-badge" id="filter-badge">0</span>
+    </button>
+    <button class="btn-export" id="btn-import-m" aria-label="Импорт xlsx">
+      <svg viewBox="0 0 13 13" fill="none"><path d="M6.5 9V1.5M4 3.5L6.5 1 9 3.5M2 11.5h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      xlsx
     </button>
     <button class="btn-export" id="btn-export-m" aria-label="xlsx">
       <svg viewBox="0 0 13 13" fill="none"><path d="M6.5 1v7.5M4 6.5l2.5 2.5 2.5-2.5M2 11.5h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1169,6 +1177,169 @@ function toggleTheme(){
 })();
 
 // ════════════════════════════════════════════════════════════════════════════
+// XLSX IMPORT (pure JS ZIP + OpenXML parser)
+// ════════════════════════════════════════════════════════════════════════════
+
+(function(){
+  function readZip(buf){
+    const dv=new DataView(buf),files={};
+    let i=0;
+    while(i<dv.byteLength-4){
+      if(dv.getUint32(i,true)!==0x04034b50) break;
+      const fnLen=dv.getUint16(i+26,true), exLen=dv.getUint16(i+28,true);
+      const fn=new TextDecoder().decode(new Uint8Array(buf,i+30,fnLen));
+      const cSize=dv.getUint32(i+18,true);
+      const dataOff=i+30+fnLen+exLen;
+      const method=dv.getUint16(i+8,true);
+      if(method===0) files[fn]=new Uint8Array(buf,dataOff,cSize);
+      else files[fn]=inflateRaw(new Uint8Array(buf,dataOff,cSize));
+      i=dataOff+cSize;
+    }
+    return files;
+  }
+
+  function inflateRaw(src){
+    const ds=new DecompressionStream('deflate-raw');
+    const writer=ds.writable.getWriter();
+    writer.write(src);writer.close();
+    return new Response(ds.readable).arrayBuffer().then(b=>new Uint8Array(b));
+  }
+
+  async function readZipAsync(buf){
+    const dv=new DataView(buf),files={};
+    let i=0;
+    while(i<dv.byteLength-4){
+      if(dv.getUint32(i,true)!==0x04034b50) break;
+      const fnLen=dv.getUint16(i+26,true), exLen=dv.getUint16(i+28,true);
+      const fn=new TextDecoder().decode(new Uint8Array(buf,i+30,fnLen));
+      const cSize=dv.getUint32(i+18,true);
+      const dataOff=i+30+fnLen+exLen;
+      const method=dv.getUint16(i+8,true);
+      if(method===0) files[fn]=new Uint8Array(buf,dataOff,cSize);
+      else files[fn]=await inflateRaw(new Uint8Array(buf,dataOff,cSize));
+      i=dataOff+cSize;
+    }
+    return files;
+  }
+
+  function parseSharedStrings(xml){
+    const ss=[];
+    const re=/<si>[\s\S]*?<\/si>/g;
+    let m;
+    while((m=re.exec(xml))!==null){
+      const txt=m[0].replace(/<[^>]+>/g,'');
+      ss.push(txt);
+    }
+    return ss;
+  }
+
+  function parseSheet(xml, ss){
+    const rowsArr=[];
+    const rowRe=/<row[^>]*>([\s\S]*?)<\/row>/g;
+    let rm;
+    while((rm=rowRe.exec(xml))!==null){
+      const cells=[];
+      const cellRe=/<c\s+r="([A-Z]+)(\d+)"([^>]*)>([\s\S]*?)<\/c>/g;
+      let cm;
+      while((cm=cellRe.exec(rm[1]))!==null){
+        const col=cm[1], type=cm[3], body=cm[4];
+        let val='';
+        const vMatch=body.match(/<v>([\s\S]*?)<\/v>/);
+        const tMatch=body.match(/<t[^>]*>([\s\S]*?)<\/t>/);
+        if(tMatch) val=tMatch[1];
+        else if(vMatch){
+          if(/t="s"/.test(type)) val=ss[parseInt(vMatch[1])]||'';
+          else val=vMatch[1];
+        }
+        val=val.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"');
+        cells.push({col,val});
+      }
+      rowsArr.push(cells);
+    }
+    return rowsArr;
+  }
+
+  function colToIndex(col){
+    let n=0;
+    for(let i=0;i<col.length;i++) n=n*26+(col.charCodeAt(i)-64);
+    return n-1;
+  }
+
+  async function doImport(){
+    if(!CONFIG) return;
+    const input=document.createElement('input');
+    input.type='file'; input.accept='.xlsx';
+    input.onchange=async function(){
+      if(!input.files.length) return;
+      try {
+        const buf=await input.files[0].arrayBuffer();
+        const files=await readZipAsync(buf);
+
+        const sheetKey=Object.keys(files).find(k=>k.match(/xl\/worksheets\/sheet\d+\.xml/i));
+        if(!sheetKey) throw new Error('Не найден лист в файле');
+        const sheetXml=new TextDecoder().decode(files[sheetKey]);
+
+        let ss=[];
+        const ssKey=Object.keys(files).find(k=>k.match(/xl\/sharedStrings\.xml/i));
+        if(ssKey) ss=parseSharedStrings(new TextDecoder().decode(files[ssKey]));
+
+        const parsed=parseSheet(sheetXml, ss);
+        if(parsed.length<2) throw new Error('Файл пуст или содержит только заголовки');
+
+        // Header row — validate columns
+        const hdrCells=parsed[0];
+        const expectedHdrs=['№',...CONFIG.columns.map(c=>c.label),...(CONFIG.expand?[CONFIG.expand.label]:[])];
+        const fileHdrs=[];
+        for(const c of hdrCells) fileHdrs[colToIndex(c.col)]=c.val;
+
+        // Flexible match: check that CONFIG columns present (ignore order issues from Excel)
+        for(let i=0;i<expectedHdrs.length;i++){
+          if((fileHdrs[i]||'').trim()!==(expectedHdrs[i]||'').trim()){
+            throw new Error(`Столбец ${i+1}: ожидается «${expectedHdrs[i]}», найдено «${fileHdrs[i]||'(пусто)'}»`);
+          }
+        }
+
+        // Parse data rows
+        const newRows=[];
+        let maxId=0;
+        for(let ri=1;ri<parsed.length;ri++){
+          const cells=parsed[ri];
+          const rowObj={};
+          for(const c of cells){
+            const ci=colToIndex(c.col);
+            if(ci===0){
+              const n=parseInt(c.val);
+              if(!isNaN(n)){rowObj.id=n; if(n>maxId) maxId=n;}
+            } else if(ci>0&&ci<=CONFIG.columns.length){
+              const col=CONFIG.columns[ci-1];
+              rowObj[col.id]=c.val;
+            } else if(CONFIG.expand&&ci===CONFIG.columns.length+1){
+              rowObj[CONFIG.expand.id]=c.val;
+            }
+          }
+          if(!rowObj.id) rowObj.id=++maxId;
+          // Ensure all columns have value
+          CONFIG.columns.forEach(col=>{ if(rowObj[col.id]===undefined) rowObj[col.id]=''; });
+          if(CONFIG.expand&&rowObj[CONFIG.expand.id]===undefined) rowObj[CONFIG.expand.id]='';
+          newRows.push(rowObj);
+        }
+
+        rows=newRows;
+        setUnsaved(true);
+        rebuildFilters();
+        render();
+        alert(`Импортировано ${newRows.length} ${pluralRu(newRows.length)}`);
+      } catch(e){
+        alert('Ошибка импорта: '+e.message);
+      }
+    };
+    input.click();
+  }
+
+  window.doImport=doImport;
+})();
+
+// ════════════════════════════════════════════════════════════════════════════
 // APP INIT
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -1267,8 +1438,9 @@ function initApp() {
   // Save
   ['btn-save-d','btn-save-m'].forEach(id=>document.getElementById(id)?.addEventListener('click',saveFile));
 
-  // Export
+  // Export / Import
   ['btn-export-d','btn-export-m'].forEach(id=>document.getElementById(id)?.addEventListener('click',doExport));
+  ['btn-import-d','btn-import-m'].forEach(id=>document.getElementById(id)?.addEventListener('click',doImport));
 
   // Theme
   document.querySelectorAll('.btn-theme').forEach(b=>b.addEventListener('click',toggleTheme));
